@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const API_BASE = "http://127.0.0.1:8000/api";
+const API_BASE = "https://flowcap-backend.onrender.com/api";
 
 export default function App() {
   const [data, setData] = useState(null);
