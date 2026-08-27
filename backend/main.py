@@ -8,7 +8,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 # Replace with your actual Client ID
-GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "994951090257-36fnidmbdc76o0nfdtbmqm2ktvlgig0e.apps.googleusercontent.com"
 
 app = FastAPI(title="FlowCap Engine")
 
