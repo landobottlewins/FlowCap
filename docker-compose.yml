@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: flowcap-backend
+    ports:
+      - "8000:8000"
+    # Optional: Map a local folder to persist SQLite data between restarts
+    # volumes:
+    #   - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: flowcap-frontend
+    ports:
+      - "5173:80" # Maps localhost:5173 to Nginx's internal port 80
+    depends_on:
+      - backend
