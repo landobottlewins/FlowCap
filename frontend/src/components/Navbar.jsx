@@ -20,7 +20,7 @@ export default function Navbar({
   onToggleTheme,
   onOpenSettings,
   onOpenAddModal,
-  onOpenCSVModal,
+  onOpenStatementImport,
   onOpenSimulator,
   onLoadDemoData,
   onLogout,
@@ -65,14 +65,14 @@ export default function Navbar({
             <span>Log Expense</span>
           </button>
 
-          {/* CSV Import */}
+          {/* BHIM UPI PDF import */}
           <button
-            onClick={onOpenCSVModal}
+            onClick={onOpenStatementImport}
             className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs sm:text-sm font-medium transition-colors"
-            title="Import CSV Statement"
+            title="Import BHIM UPI Statement PDF"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <span className="hidden md:inline">Import CSV</span>
+            <span className="hidden md:inline">Import UPI PDF</span>
           </button>
 
           {/* What-if Simulator button */}
@@ -139,4 +139,3 @@ export default function Navbar({
     </header>
   );
 }
-

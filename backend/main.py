@@ -1,11 +1,14 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from io import BytesIO
+import re
 import sqlite3
 import hashlib
 import secrets
 import jwt
+import subprocess
 from datetime import datetime, timezone, date, timedelta
 import calendar
 
@@ -222,7 +225,7 @@ class TransactionUpdate(BaseModel):
     note: str = ""
     type: str = "expense"
 
-class CSVImportItem(BaseModel):
+class StatementImportItem(BaseModel):
     amount: float
     category: str
     date: str
@@ -704,9 +707,71 @@ def delete_transaction(tx_id: int, username: str = Depends(get_current_user)):
     updated_state = calculate_budget_state(username)
     return {"status": "success", "state": updated_state}
 
-# --- CSV Statement Batch Import ---
-@app.post("/api/transactions/csv-import")
-def import_csv_transactions(items: List[CSVImportItem], username: str = Depends(get_current_user)):
+# --- BHIM UPI Statement Parsing & Batch Import ---
+BHIM_TRANSACTION_PATTERN = re.compile(
+    r"(?P<date>\d{2}/\d{2}/\d{4})\s+"
+    r"(?P<time>\d{2}:\d{2}:\d{2})\s+"
+    r"(?P<bank>.*?)\s+"
+    r"(?P<account>X{4,}\d*)\s+"
+    r"(?P<sender>.*?)\s{2,}"
+    r"(?P<receiver>.*?)\s{2,}"
+    r"(?P<reference>\d+)\s+"
+    r"(?P<payment>PAY|COLLECT)\s+"
+    r"(?P<amount>[\d,]+(?:\.\d{1,2})?)\s+"
+    r"(?P<direction>DR|CR)\s+"
+    r"(?P<status>SUCCESS|PENDING|FAILED)",
+    re.IGNORECASE,
+)
+
+@app.post("/api/transactions/bhim-upi-preview")
+async def preview_bhim_upi_statement(request: Request, username: str = Depends(get_current_user)):
+    content_type = request.headers.get("content-type", "")
+    if "application/pdf" not in content_type:
+        raise HTTPException(status_code=415, detail="Please upload a PDF exported from the BHIM UPI app")
+
+    pdf_bytes = await request.body()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="The uploaded PDF is empty")
+
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(BytesIO(pdf_bytes))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception:
+        try:
+            result = subprocess.run(
+                ["pdftotext", "-layout", "-", "-"],
+                input=pdf_bytes,
+                capture_output=True,
+                check=True,
+            )
+            text = result.stdout.decode("utf-8", errors="replace")
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            raise HTTPException(status_code=400, detail="We could not read that PDF. Please export the statement again from BHIM UPI.") from exc
+
+    if "Transaction History" not in text or "DR/CR" not in text:
+        raise HTTPException(status_code=400, detail="This does not look like a BHIM UPI transaction-statement PDF")
+
+    transactions = []
+    for match in BHIM_TRANSACTION_PATTERN.finditer(text.replace("\n", " ")):
+        row = match.groupdict()
+        if row["status"].upper() != "SUCCESS":
+            continue
+        transactions.append({
+            "date": datetime.strptime(row["date"], "%d/%m/%Y").date().isoformat(),
+            "description": row["receiver"] if row["direction"].upper() == "DR" else row["sender"],
+            "amount": float(row["amount"].replace(",", "")),
+            "type": "expense" if row["direction"].upper() == "DR" else "income",
+            "reference": row["reference"],
+        })
+
+    if not transactions:
+        raise HTTPException(status_code=400, detail="No successful BHIM UPI transactions were found in this PDF")
+    return {"transactions": transactions}
+
+@app.post("/api/transactions/import")
+@app.post("/api/transactions/csv-import", deprecated=True, include_in_schema=False)
+def import_statement_transactions(items: List[StatementImportItem], username: str = Depends(get_current_user)):
     if not items:
         raise HTTPException(status_code=400, detail="No transactions provided")
         

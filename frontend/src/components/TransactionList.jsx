@@ -153,7 +153,7 @@ export default function TransactionList({
           <div className="text-center py-12 border border-dashed border-slate-700/60 rounded-2xl bg-slate-900/40">
             <Tag className="w-8 h-8 text-slate-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-slate-400">No transactions found</p>
-            <p className="text-xs text-slate-500 mt-1">Log a transaction or import CSV to update your daily allowance</p>
+            <p className="text-xs text-slate-500 mt-1">Log a transaction or import a BHIM UPI PDF to update your daily allowance</p>
           </div>
         ) : (
           filteredTransactions.map((tx) => {
@@ -335,4 +335,3 @@ export default function TransactionList({
     </div>
   );
 }
-

@@ -21,7 +21,7 @@ import Navbar from './components/Navbar';
 import HeroSDA from './components/HeroSDA';
 import MetricsGrid from './components/MetricsGrid';
 import TransactionList from './components/TransactionList';
-import CSVImportModal from './components/CSVImportModal';
+import StatementImportModal from './components/CSVImportModal';
 import CategoryBudgets from './components/CategoryBudgets';
 import UpcomingExpenses from './components/UpcomingExpenses';
 import SpendingInsights from './components/SpendingInsights';
@@ -60,7 +60,7 @@ export default function App() {
 
   // Modals
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
-  const [isCSVModalOpen, setIsCSVModalOpen] = useState(false);
+  const [isStatementImportOpen, setIsStatementImportOpen] = useState(false);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -244,10 +244,10 @@ export default function App() {
     }
   };
 
-  // CSV Import
-  const handleImportCSV = async (items) => {
+  // BHIM UPI statement import
+  const handleImportStatement = async (items) => {
     try {
-      const res = await fetch(`${API_BASE}/transactions/csv-import`, {
+      const res = await fetch(`${API_BASE}/transactions/import`, {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify(items)
@@ -262,6 +262,17 @@ export default function App() {
     } catch (err) {
       showToast(err.message, 'error');
     }
+  };
+
+  const previewBhimUpiStatement = async (file) => {
+    const res = await fetch(`${API_BASE}/transactions/bhim-upi-preview`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/pdf' },
+      body: file
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Could not read the BHIM UPI statement');
+    return data.transactions;
   };
 
   // Upcoming Expenses Actions
@@ -481,7 +492,7 @@ export default function App() {
             onToggleTheme={handleToggleTheme}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenAddModal={() => setIsAddTxOpen(true)}
-            onOpenCSVModal={() => setIsCSVModalOpen(true)}
+            onOpenStatementImport={() => setIsStatementImportOpen(true)}
             onOpenSimulator={() => setIsSimulatorOpen(true)}
             onLoadDemoData={handleLoadDemoData}
             onLogout={handleLogout}
@@ -493,7 +504,7 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto gap-2 py-2.5 no-scrollbar">
               {[
                 { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-                { id: 'transactions', label: 'Transactions & CSV', icon: <Receipt className="w-4 h-4" /> },
+                { id: 'transactions', label: 'Transactions', icon: <Receipt className="w-4 h-4" /> },
                 { id: 'budgets', label: 'Caps & Reserved Bills', icon: <Sliders className="w-4 h-4" /> },
                 { id: 'analytics', label: 'Forecast & Charts', icon: <TrendingUp className="w-4 h-4" /> },
                 { id: 'calendar', label: 'Streak Calendar', icon: <CalendarIcon className="w-4 h-4" /> }
@@ -579,11 +590,11 @@ export default function App() {
                         <p className="text-xs text-slate-400">Search, filter, edit, or batch-import bank statement transactions</p>
                       </div>
                       <button
-                        onClick={() => setIsCSVModalOpen(true)}
+                        onClick={() => setIsStatementImportOpen(true)}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-750 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-colors"
                       >
                         <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                        <span>Import Statement (CSV)</span>
+                        <span>Import BHIM UPI PDF</span>
                       </button>
                     </div>
 
@@ -660,10 +671,11 @@ export default function App() {
           </main>
 
           {/* Modals */}
-          <CSVImportModal
-            isOpen={isCSVModalOpen}
-            onClose={() => setIsCSVModalOpen(false)}
-            onImportSuccess={handleImportCSV}
+          <StatementImportModal
+            isOpen={isStatementImportOpen}
+            onClose={() => setIsStatementImportOpen(false)}
+            onImportSuccess={handleImportStatement}
+            onPreviewStatement={previewBhimUpiStatement}
             existingTransactions={transactions}
             currency={currency}
           />

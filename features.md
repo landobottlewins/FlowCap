@@ -83,15 +83,15 @@ Categories:
 
 ---
 
-## 4. CSV Import
+## 4. BHIM UPI PDF Import
 
-Allow users to upload a CSV bank/transaction statement.
+Allow users to upload a BHIM UPI transaction-statement PDF.
 
 Features:
 
 * Drag-and-drop upload
 * Preview transactions before importing
-* Automatically map common columns such as Date, Description, Amount, Debit/Credit
+* Extract Date, recipient/sender, Amount, and Debit/Credit from the BHIM format
 * Import transactions into the dashboard
 * Recalculate SDA after import
 * Basic duplicate/invalid transaction detection
