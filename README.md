@@ -1,4 +1,4 @@
-# FlowCap
+# FlowCap - Track your expenses
 
 FlowCap is my first full-stack development project, built for the Finova recruitment challenge. It is a personal-finance app for students and young professionals who want a clearer answer than “how much money is left this month?”
 
