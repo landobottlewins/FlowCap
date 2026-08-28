@@ -1,36 +1,84 @@
-Here is a clear breakdown of all the technologies, tools, and concepts used to build and deploy **FlowCap**.
+# FlowCap
 
----
+FlowCap is my first full-stack development project, built for the Finova recruitment challenge. It is a personal-finance app for students and young professionals who want a clearer answer than “how much money is left this month?”
 
-### **1. Core Software Stack**
+Instead, FlowCap calculates a **Safe Daily Allowance (SDA)**: the amount that is safe to spend today while staying on track for the rest of the budget cycle.
 
-* **Node.js & npm:** The JavaScript runtime and package manager used to install libraries and manage project dependencies.
-* **React (v18+):** The frontend UI library used to build the single-page application and manage component states (`useState`, `useEffect`).
-* **Vite:** The lightning-fast frontend build tool and local development server used to create and serve the React app.
-* **Tailwind CSS (v4) & `@tailwindcss/vite`:** The utility-first CSS framework and Vite plugin used to build the dark-mode dashboard UI without writing custom CSS files.
-* **Python (3.x):** The backend programming language used to write the application business logic and financial calculations.
-* **FastAPI:** The modern, high-performance Python web framework used to build the REST API endpoints (`/api/dashboard`, `/api/transactions`).
-* **Uvicorn & Gunicorn:** The ASGI web server implementation (Uvicorn) and production HTTP server (Gunicorn) used to run the FastAPI application locally and in production.
-* **SQLite:** The lightweight, file-based SQL database engine built into Python, used to store budget configurations and expense logs.
+## Features
 
----
+- Dynamic Safe Daily Allowance that updates after every transaction
+- Budget onboarding for income, fixed expenses, savings target, emergency buffer, and cycle start date
+- Manual transaction creation, editing, deletion, search, and filters
+- BHIM UPI transaction-statement PDF import with an editable preview
+- Automatic debit/credit detection, categorisation, and duplicate detection for imported UPI transactions
+- Upcoming-expense reservations so planned bills reduce available spending
+- Category spending caps with progress indicators
+- Dashboard metrics, spending charts, budget health, and rule-based insights
+- Under-budget streak calendar
+- What-if purchase simulator and end-of-cycle forecast
+- JWT-based authentication and per-user data
 
-### **2. Development Tools & Utilities**
+## Tech stack
 
-* **Git & GitHub:** Version control software (Git) and online repository host (GitHub) used to track code changes and trigger automatic cloud deployments.
-* **Pydantic:** Python data validation library (used internally by FastAPI) to define and validate incoming JSON data payloads.
-* **CORS Middleware (`CORSMiddleware`):** Security configuration enabled on the FastAPI backend allowing cross-origin requests from the React frontend browser client.
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 19, Vite, Tailwind CSS |
+| Visuals | Recharts, Lucide React |
+| Backend | Python, FastAPI, Uvicorn |
+| Database | SQLite |
+| Authentication | JSON Web Tokens (PyJWT) |
+| PDF parsing | pypdf, with a `pdftotext` fallback |
+| Deployment | Docker and Docker Compose |
 
----
+## Run with Docker
 
-### **3. Production & Hosting Platforms**
+### Prerequisites
 
-* **Vercel:** Cloud platform used to host and serve the static React frontend app globally via CDN.
-* **Render:** Cloud platform used to host the live Python/FastAPI backend Web Service.
+- [Docker Engine](https://docs.docker.com/engine/install/) with Docker Compose v2
 
----
+### Start the application
 
-### **4. Financial & Algorithmic Concepts**
+From the repository root, build the images and start both services:
 
-* **Safe Daily Allowance (SDA) Algorithm:** The dynamic formula ($(\text{Disposable Funds} - \text{Total Spent}) / \text{Days Remaining}$) that auto-adjusts daily spending limits.
-* **Pacing Velocity Model:** The core financial logic that replaces static monthly limits with real-time daily budget feedback loops.
+```bash
+docker compose up --build -d
+```
+
+Open the app at [http://localhost:5173](http://localhost:5173). The FastAPI API is available at [http://localhost:8000](http://localhost:8000), with interactive API documentation at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+### Useful commands
+
+```bash
+# Follow logs from both services
+docker compose logs -f
+
+# Stop the services without removing containers
+docker compose stop
+
+# Start stopped services again
+docker compose start
+
+# Stop and remove the containers
+docker compose down
+```
+
+> FlowCap uses SQLite. The current Docker setup keeps the database inside the backend container, so avoid `docker compose down` if you need to retain local data. For a production deployment, mount the SQLite database on persistent storage or move to a managed database.
+
+## Project structure
+
+```text
+FlowCap/
+├── frontend/          # React/Vite client served by Nginx in Docker
+├── backend/           # FastAPI API and SQLite database logic
+├── docker-compose.yml # Starts the frontend and backend together
+└── features.md        # Product requirements and feature notes
+```
+
+## Safe Daily Allowance
+
+```text
+SDA = (disposable funds − fixed expenses − total spent
+       − reserved upcoming expenses − emergency buffer) / days remaining
+```
+
+This makes the budget adapt as spending changes, so overspending today is reflected in the amount available for the remaining days.
