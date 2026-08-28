@@ -82,3 +82,6 @@ SDA = (disposable funds − fixed expenses − total spent
 ```
 
 This makes the budget adapt as spending changes, so overspending today is reflected in the amount available for the remaining days.
+
+<img width="961" height="1384" alt="image" src="https://github.com/user-attachments/assets/6df7991c-49ce-4e50-9979-c7bb73c4c4d6" />
+
